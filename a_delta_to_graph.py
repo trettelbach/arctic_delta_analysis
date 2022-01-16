@@ -9,6 +9,7 @@ from scipy.ndimage.morphology import generate_binary_structure
 import sknw
 import matplotlib.pyplot as plt
 import networkx as nx
+import glob
 from scipy import ndimage
 from datetime import datetime
 
@@ -36,6 +37,7 @@ def int_conversion(img):
     img = img.astype(int)
     img = img.astype('uint8')
     return img
+
 
 def make_directed(graph, dem):
     """ convert graph from nx.Graph()
@@ -110,8 +112,13 @@ def get_node_coord_dict(graph):
     and pixel coordinates of the nodes as values.
     '''
     nodes = graph.nodes()
+    # print(nodes)
     # get pixel coordinates of nodes --> ps
     ps = np.array([nodes[i]['o'] for i in nodes])
+    # for i in nodes:
+    #     print(i)
+    #     print(nodes[i])
+    #     print('___')
     # get node ID --> keys
     keys = list(range(len(nodes)))
     keys_str = []
@@ -141,8 +148,10 @@ def save_graph_with_coords(graph, dict, location):
     np.save(fname, dict)
 
 
-def do_analysis():
-    img = read_data('./data/config_3a_channels_oceanmasked.png')
+def do_analysis(img):
+    img = read_data(filename)
+    fn_base = filename[7:-25]
+    print(fn_base)
 
     # prepare for both possible skeletonization algorithms
     zhang = skeletonize(img)
@@ -156,41 +165,52 @@ def do_analysis():
         for j in range(img_skel.shape[1]):
             if img_skel[i, j] == 1:
                 skel_transp[i, j, 0] = 255
-                skel_transp[i, j, 1] = 255
-                skel_transp[i, j, 2] = 255
-                skel_transp[i, j, 3] = 255
+                skel_transp[i, j, 1] = 0
+                skel_transp[i, j, 2] = 0
+                skel_transp[i, j, 3] = 150
 
     # build graph from skeletonized image
     G = sknw.build_sknw(img_skel, multi=False)
 
-    # need to avoid np.arrays - so we convert it to a list
+    # # need to avoid np.arrays - so we convert it to a list
     for (s, e) in G.edges():
         G[s][e]['pts'] = G[s][e]['pts'].tolist()
+        # print(s, e)
+        # print(type(G[s][e]['pts']))
+        # y = G[s][e]['pts'][0][1]-1
+        # new_s_coord = [G[s][e]['pts'][0][0], y]
+        # # print(new_s_coord)
+        # G[s][e]['pts'] = np.insert(G[s][e]['pts'], 0, new_s_coord)
+        # print(type(G[s][e]['pts']))
+        # print('___')
 
     # and make it a directed graph, since water only flows downslope
-    # flow direction is based on elevation information of DEM heights
-    dem = Image.open('./data/config_3a_bedelevation.tif')
-    dem = np.rot90(np.array(dem))
-    H = make_directed(G, dem)
+    # flow direction is based on distance from root channel
+    # dem = Image.open('./data/config_3a_bedelevation.tif')
+    # dem = np.rot90(np.array(dem))
+    # H = make_directed(G, dem)
     H = remove_selfloops(G)
 
     # save graph and node coordinates
     dictio = get_node_coord_dict(H)
+    # print(dictio)
 
-    save_graph_with_coords(H, dictio, './data/config_3a_graph')
+    save_graph_with_coords(H, dictio, f'./graphs/{fn_base}_graph')
 
-    plt.figure()  # figsize=(2.5, 2), dpi=600
-    plt.imshow(img, cmap='Greens_r', alpha=0)
-    plt.imshow(skel_transp)
-    plt.axis('off')
-    plt.savefig("./figures/skel_transp_on_img_oceanmasked.png", bbox_inches='tight')
-    return H, dictio
+    # plt.figure()  # figsize=(2.5, 2), dpi=600
+    # plt.imshow(img, cmap='Greens_r', alpha=100)
+    # plt.imshow(skel_transp)
+    # plt.axis('off')
+    # plt.savefig("./outputs/skel_transp_on_img_oceanmasked.png", bbox_inches='tight')
+    # return H, dictio
 
 
 if __name__ == '__main__':
-    plt.figure()
-    H_19, dictio_19 = do_analysis()
+    # iterate over delta images
+    for filename in glob.iglob(f'./data/*_channels_oceanmasked.png'):
+        print(filename)
+        do_analysis(filename)
 
     # print time needed for script execution
-    print(datetime.now() - startTime)
+    print(datetime.now() - startTime)  # ca. 0.6 sec per image
     plt.show()

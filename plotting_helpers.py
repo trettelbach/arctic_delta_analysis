@@ -6,7 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
 from b_extract_trough_transects import read_graph
-from a_dem_to_graph import read_data
+from a_delta_to_graph import read_data
 from datetime import datetime
 import matplotlib
 # import seaborn as sns
