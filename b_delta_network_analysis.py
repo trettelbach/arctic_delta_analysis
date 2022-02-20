@@ -167,6 +167,15 @@ def get_total_channel_length(graph):
     return total_length_km
 
 
+def depth_analysis(graph):
+    all_depths = []
+    for (s, e) in graph.edges():
+        print(graph[s][e])
+        all_depths.append(graph[s][e]['depth_mean'])
+    print(np.mean(all_depths))
+    return np.mean(all_depths)
+
+
 def meandering_factor(graph, coord_dict):
     for (s, e) in graph.edges():
         print(s, e)
@@ -202,7 +211,9 @@ def do_analysis(graph):
     dens = network_density(graph)
     # length of all channels in the network
     total_channel_km = get_total_channel_length(graph)
-    return num_nodes, num_edges, num_cc, dens, max_diam, total_channel_km
+    # mean depth over all mean depths per edge
+    mean_depth = depth_analysis(graph)
+    return num_nodes, num_edges, num_cc, dens, max_diam, total_channel_km, mean_depth
 
 
 if __name__ == '__main__':
@@ -213,11 +224,11 @@ if __name__ == '__main__':
     # create new empty csv with header
     with open('./delta_metrics.csv', 'a+', newline='') as f:
         writer = csv.writer(f)
-        header = 'filename', 'num_nodes', 'num_edges', 'num_cc', 'dens', 'max_diam', 'l_channels_km'
+        header = 'filename', 'num_nodes', 'num_edges', 'num_cc', 'dens', 'max_diam', 'l_channels_km', 'depth_mean'
         writer.writerow(header)
 
     # iterate over delta graphs in directory
-    for filename in glob.iglob(f'./graphs/*.npy'):
+    for filename in glob.iglob(f'./graphs/config_full/*.npy'):
         # print(filename)
         fn_base = filename[9:-22]
         print(fn_base)
@@ -235,3 +246,7 @@ if __name__ == '__main__':
 
     print(datetime.now() - startTime)
     plt.show()
+
+
+
+

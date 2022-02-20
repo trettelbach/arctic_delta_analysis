@@ -148,10 +148,27 @@ def save_graph_with_coords(graph, dict, location):
     np.save(fname, dict)
 
 
-def do_analysis(img):
+def get_depths(H, bed_el):
+    print(bed_el.shape)
+    all_depths = []
+    for (s, e) in H.edges():
+        all_i_depths_edge = []
+        for i in H[s][e]['pts']:
+            depth_i = bed_el[i[0]][i[1]]
+            all_i_depths_edge.append(depth_i)
+            all_depths.append(depth_i)
+        H[s][e]['depth_mean'] = np.mean(all_i_depths_edge)
+    return H, all_depths
+
+
+def do_analysis(filename):
     img = read_data(filename)
     fn_base = filename[7:-25]
-    print(fn_base)
+
+    fn_base_name = filename[:-25] + '.tif'
+    bed_el = read_data(fn_base_name)
+    bed_el = np.fliplr(np.rot90(bed_el, 3))
+    print(img.shape)
 
     # prepare for both possible skeletonization algorithms
     zhang = skeletonize(img)
@@ -195,6 +212,8 @@ def do_analysis(img):
     dictio = get_node_coord_dict(H)
     # print(dictio)
 
+    H, depths = get_depths(H, bed_el)
+
     save_graph_with_coords(H, dictio, f'./graphs/{fn_base}_graph')
 
     # plt.figure()  # figsize=(2.5, 2), dpi=600
@@ -207,9 +226,12 @@ def do_analysis(img):
 
 if __name__ == '__main__':
     # iterate over delta images
-    for filename in glob.iglob(f'./data/*_channels_oceanmasked.png'):
+    for filename in glob.iglob(f'./data/config_full/*_channels_oceanmasked.png'):
         print(filename)
         do_analysis(filename)
+
+    # filename = './data/config_full/config_full_1_bedelevation_channels_oceanmasked.png'
+    # do_analysis(filename)
 
     # print time needed for script execution
     print(datetime.now() - startTime)  # ca. 0.6 sec per image
