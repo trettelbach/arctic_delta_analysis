@@ -216,11 +216,11 @@ def do_analysis(filename):
 
     save_graph_with_coords(H, dictio, f'./graphs/{fn_base}_graph')
 
-    # plt.figure()  # figsize=(2.5, 2), dpi=600
-    # plt.imshow(img, cmap='Greens_r', alpha=100)
-    # plt.imshow(skel_transp)
-    # plt.axis('off')
-    # plt.savefig("./outputs/skel_transp_on_img_oceanmasked.png", bbox_inches='tight')
+    plt.figure()  # figsize=(2.5, 2), dpi=600
+    plt.imshow(img, cmap='Greens_r', alpha=100)
+    plt.imshow(skel_transp)
+    plt.axis('off')
+    plt.savefig(f"./outputs/{fn_base_name[19:-4]}_skel_transp_on_img_oceanmasked.png", bbox_inches='tight')
     # return H, dictio
 
 
